@@ -7,18 +7,13 @@
 # Compute the price from the Black–Scholes formula.
 # Include a Monte Carlo pricer.
 
-# Time: 15.05h
-# Section: Chp 4
-# Page: 75
+# Time: 16.00h + 17.40
+# Section: Chp 4.7
+# Page: 87
 
 # TODO (generally in the project):
-# 1. Figure out a hook-up with GitHub
-# 2. Implement Eur Option pricer using BS formula
-# 3. Implement own solvers (to challenge myself)
-# 4. Implied volatility calculator
 
 # x. Improvements in option classes
-# x. Install numpy (watch out on dependency hell)
 # x. Refactor lists to numpy objects
 
 # 'Main' class
@@ -26,6 +21,8 @@
 import Options as opt
 import Binomial as bn
 import BlackScholes as bs
+import numpy as np
+import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
 
@@ -34,22 +31,32 @@ if __name__ == "__main__":
     print('\nPut inputs')
     put = opt.Put()
 
-    print('\nBinomial tree inputs')
-    binomial = bn.BinomialModel()
+    # print('\nBinomial tree inputs')
+    # binomial = bn.BinomialModel()
 
     print('\nBlack-Scholes inputs')
     bsm = bs.BLackScholes()
 
     print('\nCall:')
-    print('EurOpt:' + str(call.calculateOptionPriceCRR(binomial, 'iterative')))
-    print("\n")
-    print('AmOpt: ' + str(call.calculateOptionPriceBySnell(binomial)))
-    print("\n")
-    print('AmOpt (BS approx): ' + str(call.approximateBlackScholes(bsm)))
+    # print('EurOpt:' + str(call.calculateOptionPriceCRR(binomial, 'iterative')))
+    # print("\n")
+    # print('AmOpt: ' + str(call.calculateOptionPriceBySnell(binomial)))
+    # print("\n")
+    # print('AmOpt (BS approx): ' + str(call.approximateBS(bsm)))
+    print('EurOpt:' + str(call.calculateOptionPriceBSM(bsm)))
 
     print('\nPut:')
-    print('EurOpt:' + str(put.calculateOptionPriceCRR(binomial, 'iterative')))
-    print("\n")
-    print('AmOpt: ' + str(put.calculateOptionPriceBySnell(binomial)))
-    print("\n")
-    print('AmOpt (BS approx): ' + str(put.approximateBlackScholes(bsm)))
+    # print('EurOpt:' + str(put.calculateOptionPriceCRR(binomial, 'iterative')))
+    # print("\n")
+    # print('AmOpt: ' + str(put.calculateOptionPriceBySnell(binomial)))
+    # print("\n")
+    # print('AmOpt (BS approx): ' + str(put.approximateBS(bsm)))
+    print('EurOpt:' + str(put.calculateOptionPriceBSM(bsm)))
+
+    # sample_size = 1000
+    # T = 1
+    # S0 = 100
+    # path = bsm.generateSamplePath(T, sample_size, S0)
+    # x = np.linspace(0, T, sample_size)
+    # plt.plot(x, path)
+    # plt.show()

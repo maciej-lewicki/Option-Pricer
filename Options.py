@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 import math
 import auxiliary as aux
 import Binomial as bn
+import numpy as np
+import scipy.stats as sc
 
 
 class Options(ABC):
@@ -11,16 +13,16 @@ class Options(ABC):
     we apply ABC class/module to create abstract methods """
     def __init__(self):
         self.time_to_maturity = int(input("Pass time to expiration (in years): "))
-        self.N = int(input("Pass number of intervals: "))
-        while self.N < 0 or self.time_to_maturity < 0:
+        self.num_intervals = int(input("Pass number of intervals: "))
+        while self.num_intervals < 0 or self.time_to_maturity < 0:
             print("Number of intervals (N) should be higher than 0, the same for time to maturity (T)")
             self.time_to_maturity = int(input("Pass time to maturity: "))
-            self.N = int(input("Pass number of intervals: "))
-        self.h = float(self.time_to_maturity / self.N)
+            self.num_intervals = int(input("Pass number of intervals: "))
+        self.h = float(self.time_to_maturity / self.num_intervals)
 
-        self.s0 = float(input("Pass initial underlying price: "))
-        while self.s0 < 0:
-            self.s0 = float(input("S0 should be non-negative number. Try again: "))
+        self.st = float(input("Pass initial underlying price: "))
+        while self.st < 0:
+            self.st = float(input("St should be non-negative number. Try again: "))
 
     @abstractmethod
     def payoff(self, price):
@@ -38,21 +40,21 @@ class EurOpt(Options):
         # TODO: Add safeguard/exception handler on too big input because of factorial function explodes quickly
         final_price = -1
         if method == 'iterative':
-            m = self.N - 1  # intermediate steps
+            m = self.num_intervals - 1  # intermediate steps
             price = []
-            for i in range(self.N + 1):  # including n
-                price.append(self.payoff(binmodel.calculateStockPriceBinominal(self.s0, self.N, i)))
+            for i in range(self.num_intervals + 1):  # including n
+                price.append(self.payoff(binmodel.calculateStockPriceBinominal(self.st, self.num_intervals, i)))
             while m >= 0:
                 for i in range(m+1):
                     price[i] = (binmodel.q*price[i+1]+(1-binmodel.q)*price[i])/(1+binmodel.r)
                 m -= 1
             final_price = price[0]
         elif method == 'aggregated':
-            final_price = math.factorial(self.N) / pow((1 + binmodel.r), self.N) \
-                          * sum((1 / (math.factorial(i) * math.factorial(self.N - i)) * pow(binmodel.q, i)
-                                 * pow(1 - binmodel.q, self.N - i)
-                                 * self.payoff(binmodel.calculateStockPriceBinominal(self.s0, self.N, i))
-                                 for i in range(self.N + 1)))  # including n, generator is enough
+            final_price = math.factorial(self.num_intervals) / pow((1 + binmodel.r), self.num_intervals) \
+                          * sum((1 / (math.factorial(i) * math.factorial(self.num_intervals - i)) * pow(binmodel.q, i)
+                                 * pow(1 - binmodel.q, self.num_intervals - i)
+                                 * self.payoff(binmodel.calculateStockPriceBinominal(self.st, self.num_intervals, i))
+                                 for i in range(self.num_intervals + 1)))  # including n, generator is enough
             # TODO: check the alternative solution with condition checking embedded in the index (Hull, p. 298)
         else:
             print('Wrong method name - try again with iterative or aggregated')
@@ -66,23 +68,23 @@ class AmOpt(Options):
     def calculateOptionPriceBySnell(self, binmodel):
         """ American option pricer using the Snell's envelope concept """
 
-        price_tree = [[0.0] * (self.N + 1)] * (self.N + 1)
-        stopping_tree = [[False] * (self.N + 1)] * (self.N + 1)
-        m = self.N - 1  # intermediate steps
-        for i in range(self.N + 1):  # including n
-            price_tree[self.N][i] = self.payoff(binmodel.calculateStockPriceBinominal(self.s0, self.N, i))
-            stopping_tree[self.N][i] = True
+        price_tree = [[0.0] * (self.num_intervals + 1)] * (self.num_intervals + 1)
+        stopping_tree = [[False] * (self.num_intervals + 1)] * (self.num_intervals + 1)
+        m = self.num_intervals - 1  # intermediate steps
+        for i in range(self.num_intervals + 1):  # including n
+            price_tree[self.num_intervals][i] = self.payoff(binmodel.calculateStockPriceBinominal(self.st, self.num_intervals, i))
+            stopping_tree[self.num_intervals][i] = True
         while m >= 0:
             for i in range(m + 1):
                 val1 = (binmodel.q * price_tree[m+1][i+1] + (1 - binmodel.q) * price_tree[m+1][i]) \
                        / (1 + binmodel.r)
-                val2 = self.payoff(binmodel.calculateStockPriceBinominal(self.s0, m, i))
+                val2 = self.payoff(binmodel.calculateStockPriceBinominal(self.st, m, i))
                 price_tree[m][i] = val1 if val1 > val2 else val2
                 stopping_tree[m][i] = True if val1 > val2 else False
             m -= 1
         return price_tree[0][0]
 
-    def approximateBlackScholes(self, bsm):
+    def approximateBS(self, bsm):
         """ The approximation of BSM by means of binomial tree """
 
         # calibrate u,d,r
@@ -107,6 +109,13 @@ class Call(EurOpt, AmOpt):
     def payoff(self, price):
         return aux.maximum(price - self.strike, 0) # max function
 
+    @aux.execution_time
+    def calculateOptionPriceBSM(self, bsm):
+        d_plus = 1/(bsm.sigma*np.sqrt(self.time_to_maturity))*\
+                 (np.log(self.st/self.strike) + (bsm.r + 0.5*bsm.sigma**2)*self.time_to_maturity)
+        d_minus = d_plus - bsm.sigma*np.sqrt(self.time_to_maturity)
+        return sc.norm.cdf(d_plus)*self.st - sc.norm.cdf(d_minus)*self.strike*np.exp(-bsm.r*self.time_to_maturity)
+
 
 class Put(EurOpt, AmOpt):
 
@@ -119,6 +128,13 @@ class Put(EurOpt, AmOpt):
 
     def payoff(self, price):
         return aux.maximum(self.strike - price, 0)
+
+    @aux.execution_time
+    def calculateOptionPriceBSM(self, bsm):
+        d_plus = 1/(bsm.sigma*np.sqrt(self.time_to_maturity))*\
+                 (np.log(self.st/self.strike) + (bsm.r + 0.5*bsm.sigma**2)*self.time_to_maturity)
+        d_minus = d_plus - bsm.sigma*np.sqrt(self.time_to_maturity)
+        return sc.norm.cdf(-d_minus)*self.strike*np.exp(-bsm.r*self.time_to_maturity) - sc.norm.cdf(-d_plus)*self.st
 
 
 class DoubleDigit(EurOpt):
