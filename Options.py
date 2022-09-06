@@ -6,6 +6,7 @@ import auxiliary as aux
 import Binomial as bn
 import numpy as np
 import scipy.stats as sc
+import BlackScholes
 
 
 class Options(ABC):
@@ -96,8 +97,22 @@ class AmOpt(Options):
         # kick off CRR pricer
         return self.calculateOptionPriceBySnell(binmodel)
 
+class ArithmeticAsianOpt(Options):
+    """ Arithmetic Asian option with average of prices in discrete time """
 
-class Call(EurOpt, AmOpt):
+    def calculateAsianOptMC(self, bsm, num_samples=100, grid=None):
+        grid = np.linspace(0, self.time_to_maturity, self.num_intervals+1)  # if equally-spaced
+        grid_intervals = np.zeros(self.num_intervals+1)
+        for i in range(1, self.num_intervals+1):
+            grid_intervals[i] = grid[i]-grid[i-1]
+        dfs = np.exp((bsm.r - 0.5 * bsm.sigma ** 2) * grid_intervals)
+        samples = np.empty(num_samples)
+        for i in range(num_samples):
+            samples[i] = self.payoff(np.mean(BlackScholes.BlackScholes.generateSamplePath(bsm, self.st, grid, dfs)))
+        return np.exp(-bsm.r*self.time_to_maturity)*np.mean(samples)
+
+
+class Call(EurOpt, AmOpt, ArithmeticAsianOpt):
 
     def __init__(self):
         super().__init__()
@@ -107,7 +122,7 @@ class Call(EurOpt, AmOpt):
             self.strike = float(input("Pass strike price (K): "))
 
     def payoff(self, price):
-        return aux.maximum(price - self.strike, 0) # max function
+        return aux.maximum(price - self.strike, 0)  # max function
 
     @aux.execution_time
     def calculateOptionPriceBSM(self, bsm):
@@ -117,7 +132,7 @@ class Call(EurOpt, AmOpt):
         return sc.norm.cdf(d_plus)*self.st - sc.norm.cdf(d_minus)*self.strike*np.exp(-bsm.r*self.time_to_maturity)
 
 
-class Put(EurOpt, AmOpt):
+class Put(EurOpt, AmOpt, ArithmeticAsianOpt):
 
     def __init__(self):
         super().__init__()

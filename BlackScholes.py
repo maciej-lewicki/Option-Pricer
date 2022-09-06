@@ -3,8 +3,8 @@
 import numpy as np
 import scipy.stats as sc
 
-class BLackScholes:
-    """ Black Scholes model cass
+class BlackScholes:
+    """ Black Scholes model class
     It's a stub so far, will be developed in next iterations """
 
     def __init__(self, st=False, mu=False, sigma=False, r=False):
@@ -30,13 +30,13 @@ class BLackScholes:
             self.sigma = sigma
             self.r = r
 
-    def generateSamplePath(self, T, num_intervals, S0):
+    def generateSamplePath(self, st, grid, dfs):
         """ Using the analytical solution of geometric Brownian motion """
-        z = sc.norm.rvs(size=num_intervals-1)
-        delta = T/num_intervals
-        df = np.exp((self.r - 0.5 * self.sigma ** 2) * delta)
-        s_tk = np.zeros(num_intervals)
-        s_tk[0] = S0
+        # the grid is equally-distant at the moment
+        n = len(grid)
+        s_tk = np.zeros(n)
+        s_tk[0] = st
+        z = sc.norm.rvs(size=n-1)
         for num, zk in enumerate(z, 1):
-            s_tk[num] = s_tk[num-1] * np.exp(self.sigma*np.sqrt(delta)*zk) * df
+            s_tk[num] = s_tk[num-1] * np.exp(self.sigma*np.sqrt(grid[num] - grid[num-1])*zk) * dfs[num]
         return s_tk

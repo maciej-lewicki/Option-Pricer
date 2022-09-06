@@ -7,11 +7,12 @@
 # Compute the price from the Black–Scholes formula.
 # Include a Monte Carlo pricer.
 
-# Time: 16.00h + 17.40
-# Section: Chp 4.7
-# Page: 87
+# Time: 17.40h + 16.10 -
+# Section: Chp 5.2
+# Page: 95
 
 # TODO (generally in the project):
+# 1. Path-dependent options valuation using MC
 
 # x. Improvements in option classes
 # x. Refactor lists to numpy objects
@@ -35,7 +36,8 @@ if __name__ == "__main__":
     # binomial = bn.BinomialModel()
 
     print('\nBlack-Scholes inputs')
-    bsm = bs.BLackScholes()
+    bsm = bs.BlackScholes()
+    num_samples = 10000
 
     print('\nCall:')
     # print('EurOpt:' + str(call.calculateOptionPriceCRR(binomial, 'iterative')))
@@ -43,7 +45,8 @@ if __name__ == "__main__":
     # print('AmOpt: ' + str(call.calculateOptionPriceBySnell(binomial)))
     # print("\n")
     # print('AmOpt (BS approx): ' + str(call.approximateBS(bsm)))
-    print('EurOpt:' + str(call.calculateOptionPriceBSM(bsm)))
+    # print('EurOpt:' + str(call.calculateOptionPriceBSM(bsm)))
+    print('AsianOpt:' + str(call.calculateAsianOptMC(bsm, num_samples)))
 
     print('\nPut:')
     # print('EurOpt:' + str(put.calculateOptionPriceCRR(binomial, 'iterative')))
@@ -51,7 +54,8 @@ if __name__ == "__main__":
     # print('AmOpt: ' + str(put.calculateOptionPriceBySnell(binomial)))
     # print("\n")
     # print('AmOpt (BS approx): ' + str(put.approximateBS(bsm)))
-    print('EurOpt:' + str(put.calculateOptionPriceBSM(bsm)))
+    # print('EurOpt:' + str(put.calculateOptionPriceBSM(bsm)))
+    print('AsianOpt:' + str(put.calculateAsianOptMC(bsm, num_samples)))
 
     # sample_size = 1000
     # T = 1
