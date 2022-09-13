@@ -24,6 +24,8 @@ class Options(ABC):
         self.st = float(input("Pass initial underlying price: "))
         while self.st < 0:
             self.st = float(input("St should be non-negative number. Try again: "))
+        self.price = 0
+        self.pricing_error = 0
 
     @abstractmethod
     def payoff(self, price):
@@ -61,6 +63,23 @@ class EurOpt(Options):
             print('Wrong method name - try again with iterative or aggregated')
         return final_price
 
+    def calculateEurOptMC(self, bsm, num_samples=100, grid=None):
+        grid = np.linspace(0, self.time_to_maturity, self.num_intervals+1)  # if equally-spaced
+        grid_intervals = np.zeros(self.num_intervals+1)
+        for i in range(1, self.num_intervals+1):
+            grid_intervals[i] = grid[i]-grid[i-1]
+        dfs = np.exp((bsm.r - 0.5 * bsm.sigma ** 2) * grid_intervals)
+        sample = np.empty(num_samples)
+        sample_error = np.empty(num_samples)
+        for i in range(num_samples):
+            sample_path = BlackScholes.BlackScholes.generateSamplePath(bsm, self.st, grid, dfs)[-1]
+            sample[i] = self.payoff(sample_path)
+            sample_error[i] = sample_path
+        self.price = np.exp(-bsm.r*self.time_to_maturity)*np.mean(sample)
+        self.pricing_error = np.exp(-bsm.r*self.time_to_maturity)/np.sqrt(num_samples-1)\
+                        * np.sqrt(1/num_samples*np.mean(sample_error**2) - (1/num_samples*np.mean(sample_error))**2)
+        return self.price
+
 
 class AmOpt(Options):
     """ American Options """
@@ -97,6 +116,7 @@ class AmOpt(Options):
         # kick off CRR pricer
         return self.calculateOptionPriceBySnell(binmodel)
 
+
 class ArithmeticAsianOpt(Options):
     """ Arithmetic Asian option with average of prices in discrete time """
 
@@ -106,10 +126,17 @@ class ArithmeticAsianOpt(Options):
         for i in range(1, self.num_intervals+1):
             grid_intervals[i] = grid[i]-grid[i-1]
         dfs = np.exp((bsm.r - 0.5 * bsm.sigma ** 2) * grid_intervals)
-        samples = np.empty(num_samples)
+        sample = np.empty(num_samples)
+        sample_error = np.empty(num_samples)
         for i in range(num_samples):
-            samples[i] = self.payoff(np.mean(BlackScholes.BlackScholes.generateSamplePath(bsm, self.st, grid, dfs)))
-        return np.exp(-bsm.r*self.time_to_maturity)*np.mean(samples)
+            single_path = BlackScholes.BlackScholes.generateSamplePath(bsm, self.st, grid, dfs)
+            mean_path = np.mean(single_path)
+            sample[i] = self.payoff(mean_path)
+            sample_error[i] = mean_path
+        self.price = np.exp(-bsm.r*self.time_to_maturity)*np.mean(sample)
+        self.pricing_error = np.exp(-bsm.r*self.time_to_maturity)/np.sqrt(num_samples-1)\
+                        * np.sqrt(1/num_samples*np.mean(sample_error**2) - (1/num_samples*np.mean(sample_error))**2)
+        return self.price
 
 
 class Call(EurOpt, AmOpt, ArithmeticAsianOpt):
