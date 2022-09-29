@@ -6,26 +6,38 @@
 # Compute the hedging portfolio on top of the price.
 # Compute the price from the Black–Scholes formula.
 # Include a Monte Carlo pricer.
+# Path-dependent and Basket options
+# PDEs and finite difference methods
 
-# Time: 20.50h
+# Time: 21.30h + 10.30
 # Section: Chp 5.4
 # Page: 103
 
 # TODO (generally in the project):
-# 1. Greeks using MC
-# 2. Variance reduction
-# 3. Improvements in option classes (TODOs)
-# 4. Refactor Options structure with respect to path-dependent options
-# 5. Refactor lists to numpy objects
+# 0. Commit all changes, set out a new branch.
+# Design:
+# 1. Refactor Options structure, e.g. wrt path-dependent options
+# 2. Improvements in option classes (TODOs)
+# (Remote repo)
+# Refactoring:
+# 3. Improve functions logic
+# 4. Numpy: use more numpy, replace for loops by built-ins, use vectorization
+# (Remote repo)
+# Greeks:
+# 6. Greeks using FD
+# 7. Greeks using MC
+# 8. Variance reduction
+# (Remote repo)
 
 # Later:
-# x. Compare with another available quant library
+# x. Improve documentation strings
+# x. Compare with another available quant library (e.g. QuantLib)
 
 # 'Main' class
 
 import Options as opt
 import Binomial as bn
-import BlackScholes as bs
+import PricingModels as bs
 import numpy as np
 import matplotlib.pyplot as plt
 

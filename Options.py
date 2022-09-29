@@ -6,8 +6,11 @@ import auxiliary as aux
 import Binomial as bn
 import numpy as np
 import scipy.stats as sc
-import BlackScholes
+import PricingModels
 
+# TODO: Move particular pricing methods to a separate module - here we just have an option's definition and logic
+# TODO: Get consistency in class names
+# TODO: inputs management - what class should be responsible for each parameter?
 
 class Options(ABC):
     """ Options class container
@@ -29,7 +32,16 @@ class Options(ABC):
 
     @abstractmethod
     def payoff(self, price):
-        """ it's shared by two derived classes - Call and Put"""
+        """Abstract method - the mast have for all options """
+        # what does it mean price here?
+        pass
+
+    @abstractmethod
+    def calculatePrice(self, valuation_method):
+        pass
+
+    @abstractmethod
+    def calculateGreeks(self, greek_name, price_valuation_method, greeks_valuation_method):
         pass
 
 
@@ -72,7 +84,7 @@ class EurOpt(Options):
         sample = np.empty(num_samples)
         sample_error = np.empty(num_samples)
         for i in range(num_samples):
-            sample_path = BlackScholes.BlackScholes.generateSamplePath(bsm, self.st, grid, dfs)[-1]
+            sample_path = PricingModels.BlackScholes.generateSamplePath(bsm, self.st, grid, dfs)[-1]
             sample[i] = self.payoff(sample_path)
             sample_error[i] = sample_path
         self.price = np.exp(-bsm.r*self.time_to_maturity)*np.mean(sample)
@@ -129,7 +141,7 @@ class ArithmeticAsianOpt(Options):
         sample = np.empty(num_samples)
         sample_error = np.empty(num_samples)
         for i in range(num_samples):
-            single_path = BlackScholes.BlackScholes.generateSamplePath(bsm, self.st, grid, dfs)
+            single_path = PricingModels.BlackScholes.generateSamplePath(bsm, self.st, grid, dfs)
             mean_path = np.mean(single_path)
             sample[i] = self.payoff(mean_path)
             sample_error[i] = mean_path

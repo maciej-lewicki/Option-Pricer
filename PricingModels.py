@@ -1,10 +1,10 @@
-# Infamous Black-Scholes (-Merton) model
+# Pricing models
 
 import numpy as np
 import scipy.stats as sc
 
 class BlackScholes:
-    """ Black Scholes model class
+    """ Infamous Black-Scholes (-Merton) model
     It's a stub so far, will be developed in next iterations """
 
     def __init__(self, st=False, mu=False, sigma=False, r=False):
