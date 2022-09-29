@@ -30,6 +30,6 @@ class BinomialModel:
             self.r = r
         self.q = (self.r - self.d) / (self.u - self.d)
 
-    def calculateStockPriceBinominal(self, s0, n, i):
+    def calculateStockPriceBinominal(self, st, n, i):
         """ returns stock price on i-th node at n-th step, both are integers """
-        return s0 * pow(1 + self.u, i) * pow(1 + self.d, n - i)
+        return st * pow(1 + self.u, i) * pow(1 + self.d, n - i)
